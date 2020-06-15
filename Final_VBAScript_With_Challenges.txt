@@ -1,0 +1,226 @@
+
+'VBA Homework to do list
+' ---------------------------------------------------------------------------
+
+' 1. Get unique ticker and add to ticker column.
+' 2. Calculate and add the Yearly change column.
+' 3. Calculate and add the Percentage change column.
+' 4. Calculate and add total stock column.
+' 5. Color format yearly change column.
+' 6. Challenge- "Greatest % increase", "Greatest % decrease" and "Greatest total volume".
+
+Sub Stock()
+
+    ' --------------------------------------------
+    ' LOOP THROUGH ALL SHEETS
+    ' --------------------------------------------
+    For Each ws In Worksheets
+
+        ' ---------------------------------------------------
+        ' CREATING SUMMARY TABLE & INITIALIZING ROW VARIABLES
+        ' ---------------------------------------------------
+
+            ' Created a Variable Last Row
+            Dim Last_Row As Long
+    
+            ' Determine the Last Row
+            Last_Row = ws.Cells(Rows.Count, 1).End(xlUp).Row
+        
+            ' Set an initial variable for holding the Ticker symbol
+            Dim Ticker_Symbol As String
+            
+            ' Set an initial variable for holding the yearly change
+            Dim Yearly_Change As Double
+            Yearly_Change = 0
+                  
+            ' Set an initial variable for holding the percentage change
+            Dim Percent_Change As Double
+            Percent_Change = 0
+              
+            
+            ' Set an initial variable for holding the total stock
+            Dim Stock_Total As Double
+            Stock_Total = 0
+            
+            ' Keep track of the first row number for each ticker
+            Dim First_Row As Long
+            First_Row = 2
+            
+            ' Keep track of the location for each ticker in the summary table
+            Dim Summary_Table_Row As Integer
+            Summary_Table_Row = 2
+        
+             'Variable to store the first non-zero open stock value
+              Dim Open_Stock_Value As Double
+              Open_Stock_Value = 0
+        
+            ' Add the Column Header for summary table
+            ws.Cells(1, 9).Value = "Ticker"
+            ws.Cells(1, 10).Value = "Yearly Change"
+            ws.Cells(1, 11).Value = "Percent Change"
+            ws.Cells(1, 12).Value = "Total Stock Volume"
+                
+           
+            ' Making header Bold
+            ws.Cells(1, 9).Font.Bold = True
+            ws.Cells(1, 10).Font.Bold = True
+            ws.Cells(1, 11).Font.Bold = True
+            ws.Cells(1, 12).Font.Bold = True
+            
+
+    ' --------------------------------------------
+    ' LOOP THROUGH THE ENTIRE TABLE
+    ' --------------------------------------------
+      For i = 2 To Last_Row
+        
+    
+            ' Check if we are still within the same ticker symbol, if not
+            If ws.Cells(i + 1, 1).Value <> ws.Cells(i, 1).Value Then
+
+                      'Get first non zero Open stock value for each ticker
+                      Open_Stock_Value = ws.Cells(First_Row, 3).Value
+        
+                      For a = First_Row To i - 1
+                        If Open_Stock_Value = 0 Then
+                            First_Row = First_Row + 1
+                            Open_Stock_Value = ws.Cells(First_Row, 3).Value
+                        Else
+                          Open_Stock_Value = ws.Cells(First_Row, 3).Value
+                        End If
+                      Next a
+        
+                      ' Set the Ticker Symbol
+                      Ticker_Symbol = ws.Cells(i, 1).Value
+                
+                      ' Calculate yearly change
+                    Yearly_Change = ws.Cells(i, 6).Value - Open_Stock_Value
+                  
+                    'Error handling
+                    On Error GoTo ErrHandler
+                    
+                    ' Calculate % change
+                          Percent_Change = (ws.Cells(i, 6).Value - Open_Stock_Value) / Open_Stock_Value
+MyLabel:
+                    'Code execution resumes from here
+                    
+                    ' Add to the Stock Total
+                      Stock_Total = Stock_Total + ws.Cells(i, 7).Value
+                
+                      ' Print the ticker symbol in the Summary Table
+                      ws.Range("I" & Summary_Table_Row).Value = Ticker_Symbol
+                
+                        ' Print the yearly change to the Summary Table
+                      ws.Range("J" & Summary_Table_Row).Value = Yearly_Change
+                
+                      ' Print the percentage change to the Summary Table
+                      ws.Range("K" & Summary_Table_Row).Value = Percent_Change
+                
+                      ' Print the stock total to the Summary Table
+                      ws.Range("L" & Summary_Table_Row).Value = Stock_Total
+                
+                      ' Add one to the summary table row
+                      Summary_Table_Row = Summary_Table_Row + 1
+                
+                ' get the new first row for next ticker
+                      First_Row = i + 1
+                      
+                      ' Reset the Stock total
+                      Stock_Total = 0
+                     
+                      
+                    ' If the cell immediately following a row is the same ticker
+            Else
+        
+                    ' Add to the Stock Total
+                    Stock_Total = Stock_Total + ws.Cells(i, 7).Value
+        
+            End If
+    
+      Next i
+
+
+        ' --------------------------------------------
+        ' FORMATTING SUMMARY TABLE
+        ' --------------------------------------------
+        
+        'Making summary table Autofit
+        ws.Range("I:L").Columns.AutoFit
+        
+        
+        'Format cell- Positive changes in green and negative changes in red
+
+        ' Determine the Last Row in summary table
+        Dim Last_Tic As Long
+        Last_Tic = ws.Cells(Rows.Count, 9).End(xlUp).Row
+        
+        For j = 2 To Last_Tic
+    
+           If ws.Cells(j, 10).Value >= 0 Then
+               ws.Cells(j, 10).Interior.ColorIndex = 4
+               
+           Else
+               ws.Cells(j, 10).Interior.ColorIndex = 3
+               
+           End If
+           
+         'Making Percentage change as % format
+            ws.Cells(j, 11).NumberFormat = "0.00%"
+        Next j
+        
+        
+        ' --------------------------------------------
+        ' CREATING GREATEST TABLE
+        ' --------------------------------------------
+        ' Add row and column Header for Greatest table
+            ws.Cells(1, 16).Value = "Ticker"
+            ws.Cells(1, 17).Value = "Value"
+            ws.Cells(2, 15).Value = "Greatest % Increase"
+            ws.Cells(3, 15).Value = "Greatest % Decrease"
+            ws.Cells(4, 15).Value = "Greatest Total Volume"
+            
+            'Get Greatest value from summary table
+               Maxp = Application.WorksheetFunction.Max(ws.Range("K:K"))
+               ws.Cells(2, 17).Value = Maxp
+               
+               Minp = Application.WorksheetFunction.Min(ws.Range("K:K"))
+               ws.Cells(3, 17).Value = Minp
+                
+                MaxVol = Application.WorksheetFunction.Max(ws.Range("L:L"))
+                ws.Cells(4, 17).Value = MaxVol
+               
+                
+            For x = 2 To Last_Tic
+                If ws.Cells(x, 11).Value = Maxp Then
+                    ws.Cells(2, 16).Value = ws.Cells(x, 9).Value
+                End If
+                 
+                 If ws.Cells(x, 11).Value = Minp Then
+                    ws.Cells(3, 16).Value = ws.Cells(x, 9).Value
+                End If
+                
+                If ws.Cells(x, 12).Value = MaxVol Then
+                    ws.Cells(4, 16).Value = ws.Cells(x, 9).Value
+                End If
+                
+            Next x
+            
+            'Format Greatest table
+            ws.Cells(2, 17).NumberFormat = "0.00%"
+            ws.Cells(3, 17).NumberFormat = "0.00%"
+            ws.Range("O:Q").Columns.AutoFit
+            
+    Next ws
+    
+            MsgBox ("Stock Calculations Complete")
+
+   Exit Sub
+ ' --------------------------------------------
+  'ERROR HANDLING
+  '--------------------------------------------
+ErrHandler:
+   Percent_Change = (ws.Cells(i, 6).Value - ws.Cells(First_Row, 3).Value) / 1
+   Resume MyLabel
+   
+    
+End Sub
+
